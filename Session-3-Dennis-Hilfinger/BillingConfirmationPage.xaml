@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Session_3_Dennis_Hilfinger.BillingConfirmationPage"
+             Title="BillingConfirmationPage">
+    <VerticalStackLayout Spacing="20">
+        <HorizontalStackLayout
+            VerticalOptions="Center"
+            HorizontalOptions="Center">
+            <Label
+                Text="Total amount:"
+                VerticalOptions="Center"/>
+            <Label
+                x:Name="TotalAmountLabel"
+                VerticalOptions="Center"
+                Text="$ 0"/>
+        </HorizontalStackLayout>
+        
+        <HorizontalStackLayout
+            VerticalOptions="Center"
+            HorizontalOptions="Center"
+            Spacing="10">
+            <Label
+                Text="Payment method:"
+                VerticalOptions="Start"/>
+            <VerticalStackLayout>
+
+                <RadioButton
+                x:Name="CreditCardRadioButton"
+                Content="Credit Card"
+                VerticalOptions="Center"
+                GroupName="PaymentMethod"/>
+                <RadioButton
+                x:Name="CashRadioButton"
+                Content="Cash"
+                VerticalOptions="Center"
+                GroupName="PaymentMethod"/>
+                <RadioButton
+                x:Name="VoucherRadioButton"
+                Content="Voucher"
+                VerticalOptions="Center"
+                GroupName="PaymentMethod"/>
+            </VerticalStackLayout>
+        </HorizontalStackLayout>
+
+        <HorizontalStackLayout
+            VerticalOptions="Center"
+            HorizontalOptions="Center"
+            Spacing="50">
+            <Button
+                Text="Issue tickets"
+                Clicked="IssueTickets"
+                WidthRequest="150"
+                HeightRequest="50"/>
+            <Button
+                Text="Cancel"
+                Clicked="Cancel"
+                WidthRequest="150"
+                HeightRequest="50"/>
+        </HorizontalStackLayout>
+    </VerticalStackLayout>
+</ContentPage>

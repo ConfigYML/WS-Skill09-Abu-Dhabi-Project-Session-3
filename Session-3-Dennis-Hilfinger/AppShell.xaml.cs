@@ -5,6 +5,8 @@
         public AppShell()
         {
             InitializeComponent();
+            Routing.RegisterRoute(nameof(BookingConfirmationPage), typeof(BookingConfirmationPage));
+            Routing.RegisterRoute(nameof(BillingConfirmationPage), typeof(BillingConfirmationPage));
         }
     }
 }

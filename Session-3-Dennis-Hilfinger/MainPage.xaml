@@ -83,13 +83,15 @@
                         VerticalOptions="Center"
                         HorizontalOptions="Center"
                         Content="Return"
-                        IsChecked="True"/>
+                        IsChecked="True"
+                        CheckedChanged="BookingTypeChanged"/>
                     <RadioButton
                         x:Name="OneWay"
                         GroupName="BookingType"
                         VerticalOptions="Center"
                         HorizontalOptions="Center"
-                        Content="One-Way"/>
+                        Content="One-Way"
+                        CheckedChanged="BookingTypeChanged"/>
                 </HorizontalStackLayout>
 
 
@@ -195,7 +197,7 @@
                 WidthRequest="1000"
                 x:Name="ReturnFlightHeader">
                 <Label
-                    Text="Outbound flights:"
+                    Text="Return flights:"
                     VerticalOptions="Center"
                     HorizontalOptions="Start"/>
                 <CheckBox

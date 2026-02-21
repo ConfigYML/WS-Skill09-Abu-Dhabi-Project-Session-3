@@ -42,6 +42,18 @@ build_metadata.AdditionalFiles.ManifestResourceName = Session_3_Dennis_Hilfinger
 build_metadata.AdditionalFiles.TargetPath = AppShell.xaml
 build_metadata.AdditionalFiles.RelativePath = AppShell.xaml
 
+[C:/2_WorldSkills/Training/AbuDhabi_2017/WS-Skill09-Abu-Dhabi-Project-Session-3/Session-3-Dennis-Hilfinger/BillingConfirmationPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Session_3_Dennis_Hilfinger.BillingConfirmationPage.xaml
+build_metadata.AdditionalFiles.TargetPath = BillingConfirmationPage.xaml
+build_metadata.AdditionalFiles.RelativePath = BillingConfirmationPage.xaml
+
+[C:/2_WorldSkills/Training/AbuDhabi_2017/WS-Skill09-Abu-Dhabi-Project-Session-3/Session-3-Dennis-Hilfinger/BookingConfirmationPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Session_3_Dennis_Hilfinger.BookingConfirmationPage.xaml
+build_metadata.AdditionalFiles.TargetPath = BookingConfirmationPage.xaml
+build_metadata.AdditionalFiles.RelativePath = BookingConfirmationPage.xaml
+
 [C:/2_WorldSkills/Training/AbuDhabi_2017/WS-Skill09-Abu-Dhabi-Project-Session-3/Session-3-Dennis-Hilfinger/MainPage.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = Session_3_Dennis_Hilfinger.MainPage.xaml

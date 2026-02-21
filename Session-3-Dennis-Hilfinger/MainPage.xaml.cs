@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Session_3_Dennis_Hilfinger.Models;
 using System.Collections.ObjectModel;
 using Windows.Devices.AllJoyn;
 
@@ -47,129 +48,220 @@ namespace Session_3_Dennis_Hilfinger
 
         private async void LoadData(object sender, EventArgs e)
         {
-            using (var db = new AirlineContext())
+            try
             {
-                string departure = DeparturePicker.SelectedItem.ToString();
-                string destination = DestinationPicker.SelectedItem.ToString();
-                string cabin = CabinPicker.SelectedItem.ToString();
-                DateOnly outboundDate = DateOnly.MinValue;
-                DateOnly returnDate = DateOnly.MinValue;
-                HasReturn = Return.IsChecked;
-
-                if (departure == destination && !String.IsNullOrEmpty(departure))
-                {
-                    await DisplayAlert("Info", "Departure and destination airport can not be the same. Please change your selection.", "Ok");
-                    return;
-                }
-
-                if (!String.IsNullOrEmpty(departure) && String.IsNullOrEmpty(destination))
-                {
-                    await DisplayAlert("Info", "Please select a departure airport and a destination airport.", "Ok");
-                    return;
-                }
-
-                if (!String.IsNullOrEmpty(OutboundDateInput.Text) || (HasReturn && !String.IsNullOrEmpty(ReturnDateInput.Text)))
-                {
-                    if (!DateOnly.TryParse(OutboundDateInput.Text, out DateOnly outbound))
-                    {
-                        await DisplayAlert("Info", "Outbound date was not in the correct fomat.", "Ok");
-                        return;
-                    }
-                    if (HasReturn)
-                    {
-                        if (!DateOnly.TryParse(ReturnDateInput.Text, out DateOnly returnD))
-                        {
-                            await DisplayAlert("Info", "Return date was not in the correct fomat.", "Ok");
-                            return;
-                        }
-                        if (outbound > returnD)
-                        {
-                            await DisplayAlert("Info", "Return date can not be before outbound date.", "Ok");
-                            return;
-                        }
-                        returnDate = returnD;
-                    }
-                    outboundDate = outbound;
-                }
-
-                if(HasReturn)
-                {
-                    ReturnFlightHeader.IsVisible = true;
-                    ReturnFlightGrid.IsVisible = true;
-                } else
-                {
-                    ReturnFlightHeader.IsVisible = false;
-                    ReturnFlightGrid.IsVisible = false;
-                }
-
-                var departureAirport = await db.Airports.FirstOrDefaultAsync(a => a.Iatacode == departure);
-                var arrivalAirport = await db.Airports.FirstOrDefaultAsync(a => a.Iatacode == destination);
-
-
-                OutboundFlightList.Clear();
-                ReturnFlightList.Clear();
-
-                var outboundFlights = db.Schedules
-                    .Where(f => f.Confirmed == true
-                    && f.Route.DepartureAirportId == departureAirport.Id 
-                    && f.Route.ArrivalAirportId == arrivalAirport.Id);
-
-                if (OutboundCheckBox.IsChecked)
-                {
-                    var priorDate = outboundDate.AddDays(-3);
-                    var laterDate = outboundDate.AddDays(3);
-                    outboundFlights = outboundFlights.Where(f => f.Date >= priorDate && f.Date <= laterDate);
-                } else
-                {
-                    outboundFlights = outboundFlights.Where(f => f.Date == outboundDate);
-                }
-
-                /*foreach (var flight in filtered)
-                {
-                    new FlightDTO
-                    {
-                        Id = flight.Id,
-                        FlightDate = flight.Date,
-                        FlightTime = flight.Time,
-                        DepartureAirport = flight.Route.DepartureAirport.Iatacode,
-                        DestinationAirport = flight.Route.ArrivalAirport.Iatacode,
-                        FlightNumber = int.Parse(flight.FlightNumber),
-                        Aircraft = flight.AircraftId,
-                        BasePrice = decimal.ToInt32(flight.EconomyPrice)
-                    };
-                }*/
-
-            }
-        }
-        /*
-        private async void CancelFlight(object sender, EventArgs e)
-        {
-            if (FlightGrid.SelectedItem != null)
-            {
-                FlightDTO flight = FlightGrid.SelectedItem as FlightDTO; 
                 using (var db = new AirlineContext())
                 {
-                    var fl = db.Schedules.FirstOrDefault(s => s.Id == flight.Id);
-                    fl.Confirmed = !fl.Confirmed;
-                    db.Update(fl);
-                    await db.SaveChangesAsync();
-                    LoadData(null, null);
+                    string departure = DeparturePicker.SelectedItem.ToString();
+                    string destination = DestinationPicker.SelectedItem.ToString();
+                    string cabin = CabinPicker.SelectedItem.ToString();
+                    DateOnly outboundDate = DateOnly.MinValue;
+                    DateOnly returnDate = DateOnly.MinValue;
+                    HasReturn = Return.IsChecked;
+
+
+                    if (String.IsNullOrEmpty(departure) || String.IsNullOrEmpty(destination))
+                    {
+                        await DisplayAlert("Info", "Please select a departure airport and a destination airport.", "Ok");
+                        return;
+                    }
+
+                    if (departure == destination && !String.IsNullOrEmpty(departure))
+                    {
+                        await DisplayAlert("Info", "Departure and destination airport can not be the same. Please change your selection.", "Ok");
+                        return;
+                    }
+
+                    if (!String.IsNullOrEmpty(OutboundDateInput.Text) || (HasReturn && !String.IsNullOrEmpty(ReturnDateInput.Text)))
+                    {
+                        if (!DateOnly.TryParse(OutboundDateInput.Text, out DateOnly outbound))
+                        {
+                            await DisplayAlert("Info", "Outbound date was not in the correct fomat.", "Ok");
+                            return;
+                        }
+                        if (HasReturn)
+                        {
+                            if (!DateOnly.TryParse(ReturnDateInput.Text, out DateOnly returnD))
+                            {
+                                await DisplayAlert("Info", "Return date was not in the correct fomat.", "Ok");
+                                return;
+                            }
+                            if (outbound > returnD)
+                            {
+                                await DisplayAlert("Info", "Return date can not be before outbound date.", "Ok");
+                                return;
+                            }
+                            returnDate = returnD;
+                        }
+                        outboundDate = outbound;
+                    }
+                    else
+                    {
+                        await DisplayAlert("Info", "Please enter the required date(s) for the flight.", "Ok");
+                        return;
+                    }
+
+                    if (HasReturn)
+                    {
+                        ReturnFlightHeader.IsVisible = true;
+                        ReturnFlightGrid.IsVisible = true;
+                    }
+                    else
+                    {
+                        ReturnFlightHeader.IsVisible = false;
+                        ReturnFlightGrid.IsVisible = false;
+                    }
+
+                    var departureAirport = await db.Airports.FirstOrDefaultAsync(a => a.Iatacode == departure);
+                    var arrivalAirport = await db.Airports.FirstOrDefaultAsync(a => a.Iatacode == destination);
+
+                    OutboundFlightList.Clear();
+                    ReturnFlightList.Clear();
+
+                    var outboundFlights = db.Schedules
+                        .Include(s => s.Route).ThenInclude(r => r.DepartureAirport)
+                        .Include(s => s.Route).ThenInclude(r => r.ArrivalAirport)
+                        .Where(f => f.Confirmed == true
+                        && f.Route.DepartureAirportId == departureAirport.Id
+                        && f.Route.ArrivalAirportId == arrivalAirport.Id);
+
+                    if (OutboundCheckBox.IsChecked)
+                    {
+                        var priorDate = outboundDate.AddDays(-3);
+                        var laterDate = outboundDate.AddDays(3);
+                        outboundFlights = outboundFlights.Where(f => f.Date >= priorDate && f.Date <= laterDate);
+                    }
+                    else
+                    {
+                        outboundFlights = outboundFlights.Where(f => f.Date == outboundDate);
+                    }
+
+                    OutboundFlightList.Clear();
+                    foreach (var flight in outboundFlights)
+                    {
+                        if (flight.Route == null)
+                        {
+                            continue;
+                        }
+                        OutboundFlightList.Add(new FlightDTO
+                        {
+                            Id = flight.Id,
+                            FlightDate = flight.Date,
+                            FlightTime = flight.Time,
+                            DepartureAirport = flight.Route.DepartureAirport.Iatacode,
+                            DestinationAirport = flight.Route.ArrivalAirport.Iatacode,
+                            FlightNumbers = flight.FlightNumber,
+                            BasePrice = decimal.ToInt32(flight.EconomyPrice),
+                            Cabin = cabin
+                        });
+                    }
+                    OutboundFlightGrid.ItemsSource = OutboundFlightList;
+
+
+                    if (HasReturn)
+                    {
+                        ReturnFlightList.Clear();
+
+                        var returnFlights = db.Schedules
+                            .Include(s => s.Route).ThenInclude(r => r.DepartureAirport)
+                            .Include(s => s.Route).ThenInclude(r => r.ArrivalAirport)
+                            .Where(f => f.Confirmed == true
+                            && f.Route.DepartureAirportId == arrivalAirport.Id   // switch departure and arrival for return flight
+                            && f.Route.ArrivalAirportId == departureAirport.Id); // switch departure and arrival for return flight
+
+                        if (ReturnCheckBox.IsChecked)
+                        {
+                            var priorDate = returnDate.AddDays(-3);
+                            var laterDate = returnDate.AddDays(3);
+                            returnFlights = returnFlights.Where(f => f.Date >= priorDate && f.Date <= laterDate);
+                        }
+                        else
+                        {
+                            returnFlights = returnFlights.Where(f => f.Date == returnDate);
+                        }
+
+                        ReturnFlightList.Clear();
+                        foreach (var flight in returnFlights)
+                        {
+                            if (flight.Route == null)
+                            {
+                                continue;
+                            }
+                            ReturnFlightList.Add(new FlightDTO
+                            {
+                                Id = flight.Id,
+                                FlightDate = flight.Date,
+                                FlightTime = flight.Time,
+                                DepartureAirport = flight.Route.DepartureAirport.Iatacode,
+                                DestinationAirport = flight.Route.ArrivalAirport.Iatacode,
+                                FlightNumbers = flight.FlightNumber,
+                                BasePrice = decimal.ToInt32(flight.EconomyPrice),
+                                Cabin = cabin
+                            });
+                        }
+                        ReturnFlightGrid.ItemsSource = ReturnFlightList;
+                    }
+                    
                 }
+            } catch
+            {
+                await DisplayAlert("Error", "An error occurred while loading the data. Please check your input and try again.", "Ok");
+                return;
             }
-        }*/
+        }
+
+        private async void BookingTypeChanged(object sender, EventArgs e)
+        {
+            if (Return.IsChecked)
+            {
+                ReturnDateInput.IsEnabled = true;
+            } else
+            {
+                ReturnDateInput.IsEnabled = false;
+            }
+        }
 
         private async void OutboundChecked(object sender, EventArgs e)
         {
-            //LoadData(null, null);
+            LoadData(null, null);
         }
         private async void ReturnChecked(object sender, EventArgs e)
         {
-            //LoadData(null, null);
+            LoadData(null, null);
         }
 
         private async void BookFlight(object sender, EventArgs e)
         {
-            
+            var outboundFlight = OutboundFlightGrid.SelectedItem as FlightDTO;
+            var returnFlight = ReturnFlightGrid.SelectedItem as FlightDTO;
+            if (outboundFlight == null)
+            {
+                await DisplayAlert("Info", "Please select an outbound flight to book.", "Ok");
+                return;
+            }
+            if (HasReturn && returnFlight == null)
+            {
+                await DisplayAlert("Info", "Please select a return flight to book.", "Ok");
+                return;
+            }
+            if (!int.TryParse(PassengerAmount.Text, out int passengerAmount))
+            {
+                await DisplayAlert("Info", "Passenger amount must be a valid number.", "Ok");
+                return;
+            }
+
+            if (passengerAmount <= 0)
+            {
+                await DisplayAlert("Info", "Passenger amount must be at least 1.", "Ok");
+                return;
+            }
+            ShellNavigationQueryParameters parameters = new ShellNavigationQueryParameters()
+            {
+                {"outboundFlight", outboundFlight},
+                {"returnFlight", returnFlight},
+                {"passengerAmount", passengerAmount}
+            };
+            await Shell.Current.GoToAsync("BookingConfirmationPage", parameters);
         }
 
         private async void Exit(object sender, EventArgs e)
@@ -177,41 +269,7 @@ namespace Session_3_Dennis_Hilfinger
             Application.Current.Quit();
         }
 
-        public class FlightDTO
-        {
-            public int Id { get; set; }
-            public DateOnly FlightDate { get; set; }
-            public TimeOnly FlightTime { get; set; }
-            public DateTime FlightDt => new DateTime(FlightDate.Year, FlightDate.Month, FlightDate.Day, FlightTime.Hour, FlightTime.Minute, FlightTime.Second);
-            public string DepartureAirport { get; set; }
-            public string DestinationAirport { get; set; }
-            public int FlightNumber { get; set; }
-            public string Cabin { get; set; }
-            public int Price { get
-                {
-                    if (Cabin == "Economy")
-                    {
-                        return BasePrice;
-                    }
-                    else if (Cabin == "Business Class")
-                    {
-                        return BusinessPrice;
-                    }
-                    else if (Cabin == "First Class")
-                    {
-                        return FirstClassPrice;
-                    }
-                    else
-                    {
-                        return BasePrice;
-                    }
-                }
-            }
-            public int BasePrice { get; set; }
-            public int BusinessPrice => (int)(BasePrice * 1.35);
-            public int FirstClassPrice => (int)(BusinessPrice * 1.3);
-            public int StopCount { get; set; }
-        }
+        
 
     }
     
