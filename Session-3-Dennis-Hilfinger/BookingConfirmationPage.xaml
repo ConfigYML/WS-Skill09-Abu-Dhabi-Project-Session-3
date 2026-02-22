@@ -7,10 +7,14 @@
     <ScrollView>
         <VerticalStackLayout
             Margin="0, 10, 0, 50">
+            <Label 
+                Text="Outbound flight details:"
+                VerticalOptions="Center"
+                HorizontalOptions="Start"
+                Margin="0, 50, 0, 0"/>
             <Grid
         ColumnDefinitions="*, *, *, *, *"
-        ColumnSpacing="10"
-        Margin="0, 50, 0, 0">
+        ColumnSpacing="10">
                 <HorizontalStackLayout 
             Grid.Column="0" 
             Grid.Row="0"
@@ -83,10 +87,14 @@
 
             </Grid>
 
+            <Label 
+                Text="Return flight details:"
+                VerticalOptions="Center"
+                HorizontalOptions="Start"
+                Margin="0, 20, 0, 0"/>
             <Grid
         ColumnDefinitions="*, *, *, *, *"
-        ColumnSpacing="10"
-        Margin="0, 20, 0, 0">
+        ColumnSpacing="10">
                 <HorizontalStackLayout 
             Grid.Column="0" 
             Grid.Row="0"
@@ -159,12 +167,17 @@
 
             </Grid>
 
+
+            <Label 
+                Text="Passenger details:"
+                VerticalOptions="Center"
+                HorizontalOptions="Start"
+                Margin="0, 50, 0, 0"/>
             <Grid 
         RowDefinitions="*, *, *"
         ColumnDefinitions="*, *, *"
         ColumnSpacing="10"
-        RowSpacing="10"
-                Margin="0, 50, 0, 0">
+        RowSpacing="10">
 
                 <HorizontalStackLayout 
             Grid.Column="0"
@@ -176,7 +189,7 @@
                 VerticalOptions="Center" />
                     <Entry
                 x:Name="FirstnameInput"
-                WidthRequest="100"
+                WidthRequest="150"
                 VerticalOptions="Center"/>
                 </HorizontalStackLayout>
 
@@ -190,7 +203,7 @@
                 VerticalOptions="Center" />
                     <Entry
                 x:Name="LastnameInput"
-                WidthRequest="100"
+                WidthRequest="150"
                 VerticalOptions="Center"/>
                 </HorizontalStackLayout>
 
@@ -204,7 +217,7 @@
                 VerticalOptions="Center" />
                     <Entry
                 x:Name="BirthdateInput"
-                WidthRequest="100"
+                WidthRequest="150"
                 VerticalOptions="Center"/>
                 </HorizontalStackLayout>
 
@@ -220,7 +233,7 @@
                 VerticalOptions="Center" />
                     <Entry
                 x:Name="PassportNumberInput"
-                WidthRequest="100"
+                WidthRequest="150"
                 VerticalOptions="Center"/>
                 </HorizontalStackLayout>
 
@@ -234,7 +247,7 @@
                 VerticalOptions="Center" />
                     <Picker
                 x:Name="CountryPicker"
-                WidthRequest="100"
+                WidthRequest="150"
                 VerticalOptions="Center"/>
                 </HorizontalStackLayout>
 
@@ -248,7 +261,7 @@
                 VerticalOptions="Center" />
                     <Entry
                 x:Name="PhoneInput"
-                WidthRequest="100"
+                WidthRequest="150"
                 VerticalOptions="Center"/>
                 </HorizontalStackLayout>
 
@@ -263,13 +276,19 @@
             Clicked="AddPassenger"/>
             </Grid>
 
+            <Label 
+                Text="Passenger list:"
+                VerticalOptions="Center"
+                HorizontalOptions="Start"
+                Margin="0, 50, 0, 0"/>
             <CollectionView 
         x:Name="PassengerGrid"
         VerticalOptions="Center"
         HorizontalOptions="Center"
         HeightRequest="300"
         WidthRequest="1000"
-        SelectionMode="Single">
+        SelectionMode="Single"
+                SelectionChanged="PassengerSelectionChanged">
                 <CollectionView.Header>
                     <Grid ColumnDefinitions="*, *, *, *, *, *">
                         <Label Text="Firstname" Grid.Column="0" FontAttributes="Bold"/>
@@ -284,11 +303,11 @@
                     <DataTemplate>
                         <Grid ColumnDefinitions="*, *, *, *, *, *">
 
-                            <Label Text="{Binding Firstname}" Style="{StaticResource HightlightedLabelStyle}" Grid.Column="0"/>
-                            <Label Text="{Binding Lastname}" Style="{StaticResource HightlightedLabelStyle}" Grid.Column="1"/>
-                            <Label Text="{Binding Birthdate}" Style="{StaticResource HightlightedLabelStyle}" Grid.Column="2"/>
+                            <Label Text="{Binding FirstName}" Style="{StaticResource HightlightedLabelStyle}" Grid.Column="0"/>
+                            <Label Text="{Binding LastName}" Style="{StaticResource HightlightedLabelStyle}" Grid.Column="1"/>
+                            <Label Text="{Binding DateOfBirth}" Style="{StaticResource HightlightedLabelStyle}" Grid.Column="2"/>
                             <Label Text="{Binding PassportNumber}" Style="{StaticResource HightlightedLabelStyle}" Grid.Column="3"/>
-                            <Label Text="{Binding Country.Name}" Style="{StaticResource HightlightedLabelStyle}" Grid.Column="4"/>
+                            <Label Text="{Binding PassportCountry.Name}" Style="{StaticResource HightlightedLabelStyle}" Grid.Column="4"/>
                             <Label Text="{Binding Phone}" Style="{StaticResource HightlightedLabelStyle}" Grid.Column="5"/>
                         </Grid>
                     </DataTemplate>
@@ -296,6 +315,7 @@
             </CollectionView>
 
             <Button
+                x:Name="RemovePassengerBtn"
         Clicked="RemovePassenger"
         Text="Remove passenger"
         IsEnabled="False"

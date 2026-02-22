@@ -24,7 +24,7 @@ namespace Session_3_Dennis_Hilfinger.Models
                 {
                     return BasePrice;
                 }
-                else if (Cabin == "Business Class")
+                else if (Cabin == "Business")
                 {
                     return BusinessPrice;
                 }

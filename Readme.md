@@ -10,3 +10,5 @@ To be able to start the application please make sure that MSSQL local database i
 # Starting the application
 For starting the application navigate to the Executable/net9.0-windows10.0.19041.0/win10-x64 folder and double-click the _runMe.exe file.
 
+# Important notes
+For each booking a user is needed. The first passenger in the list is taken as User. If the user does not exist yet in the User table of the database (based on firstname, lastname and birthdate -> only possible way to check for existance since mail address not present for booking) then the User is created and added with empty email and password (empty string not null!).

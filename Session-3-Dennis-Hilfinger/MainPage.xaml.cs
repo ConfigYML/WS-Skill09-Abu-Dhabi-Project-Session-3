@@ -22,7 +22,7 @@ namespace Session_3_Dennis_Hilfinger
         {
             CabinPicker.Items.Clear();
             CabinPicker.Items.Add("Economy");
-            CabinPicker.Items.Add("Business Class");
+            CabinPicker.Items.Add("Business");
             CabinPicker.Items.Add("First Class");
             CabinPicker.SelectedIndex = 0;
 

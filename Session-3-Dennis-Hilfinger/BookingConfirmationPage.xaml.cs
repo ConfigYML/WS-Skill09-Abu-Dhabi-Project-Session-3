@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Session_3_Dennis_Hilfinger.Models;
 using System.Collections.ObjectModel;
+using Windows.ApplicationModel.VoiceCommands;
 
 namespace Session_3_Dennis_Hilfinger;
 
@@ -14,6 +15,7 @@ public partial class BookingConfirmationPage : ContentPage, IQueryAttributable
     public BookingConfirmationPage()
     {
         InitializeComponent();
+        PassengerGrid.ItemsSource = passengers;
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -51,11 +53,81 @@ public partial class BookingConfirmationPage : ContentPage, IQueryAttributable
 
     private async void AddPassenger(object sender, EventArgs e)
     {
-        await DisplayAlert("Info", "Feature not implemented yet. Please check back later.", "OK");
+        if (String.IsNullOrEmpty(FirstnameInput.Text) || String.IsNullOrEmpty(LastnameInput.Text) 
+            || String.IsNullOrEmpty(BirthdateInput.Text) || String.IsNullOrEmpty(PassportNumberInput.Text) 
+            || CountryPicker.SelectedIndex < 0 || String.IsNullOrEmpty(PhoneInput.Text))
+        {
+            await DisplayAlert("Info", "Please fill in all fields.", "OK");
+            return;
+        }
+
+        if (!DateOnly.TryParse(BirthdateInput.Text, out DateOnly birthdate))
+        {
+            await DisplayAlert("Info", "Please enter a valid date for the birthdate.", "OK");
+            return;
+        } 
+
+        if (!int.TryParse(PassportNumberInput.Text, out int passportNumber))
+        {
+            await DisplayAlert("Info", "Please enter a valid passport number.", "OK");
+            return;
+        }
+
+        string phoneNumber = PhoneInput.Text;
+
+        if (phoneNumber.StartsWith("+"))
+        {
+            phoneNumber = phoneNumber.Split("+")[1];
+        } 
+        if (!long.TryParse(phoneNumber.Replace(" ", String.Empty), out long number))
+        {
+            await DisplayAlert("Info", "Please enter a valid phone number.", "OK");
+            return;
+        }
+
+        phoneNumber = phoneNumber.Replace(" ", "-");
+
+        using (var db = new AirlineContext())
+        {
+            var country = await db.Countries.FirstOrDefaultAsync(c => c.Name == CountryPicker.SelectedItem.ToString());
+            passengers.Add(new Passenger()
+            {
+                FirstName = FirstnameInput.Text,
+                LastName = LastnameInput.Text,
+                DateOfBirth = birthdate,
+                PassportNumber = passportNumber.ToString(),
+                CountryId = country.Id,
+                PassportCountry = country,
+                Phone = phoneNumber
+            });
+            
+            FirstnameInput.Text = String.Empty;
+            LastnameInput.Text = String.Empty;
+            BirthdateInput.Text = String.Empty;
+            PassportNumberInput.Text = String.Empty;
+            PhoneInput.Text = String.Empty;
+        }
+
     }
     private async void RemovePassenger(object sender, EventArgs e)
     {
-        await DisplayAlert("Info", "Feature not implemented yet. Please check back later.", "OK");
+        var passenger = PassengerGrid.SelectedItem as Passenger;
+        if (passenger != null)
+        {
+            passengers.Remove(passengers.FirstOrDefault(p => p.PassportNumber == passenger.PassportNumber));
+        }
+    }
+
+    private async void PassengerSelectionChanged(object sender, EventArgs e)
+    {
+        var passenger = PassengerGrid.SelectedItem as Passenger;
+        if (passenger != null)
+        {
+            RemovePassengerBtn.IsEnabled = true;
+        } else
+        {
+            RemovePassengerBtn.IsEnabled = false;
+        }
     }
 
     private async void Cancel(object sender, EventArgs e)
@@ -65,24 +137,18 @@ public partial class BookingConfirmationPage : ContentPage, IQueryAttributable
 
     private async void ConfirmBooking(object sender, EventArgs e)
     {
-        await DisplayAlert("Info", "Feature not implemented yet. Preview of next page available.", "OK");
+        if (passengers.Count != passengerCount)
+        {
+            await DisplayAlert("Info", $"Passenger amount in list must match the passenger amount selected on the previous page. {passengerCount} passenger(s) are required.", "Ok");
+            return;
+        }
         ShellNavigationQueryParameters parameters = new ShellNavigationQueryParameters()
         {
             {"outboundFlight", outboundFlight},
             {"returnFlight", returnFlight},
-            {"passengerAmount", passengerCount} 
+            {"passengerAmount", passengerCount},
+            {"passengers", passengers.ToList()}
         };
         await Shell.Current.GoToAsync("BillingConfirmationPage", parameters);
-    }
-
-    public class Passenger
-    {
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public DateOnly DateOfBirth { get; set; }
-        public string PassportNumber { get; set; }
-        public int CountryId { get; set; }
-        public Country PassportCountry { get; set; }
-        public string Phone { get; set; }
     }
 }
