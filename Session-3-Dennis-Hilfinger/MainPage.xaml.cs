@@ -255,6 +255,103 @@ namespace Session_3_Dennis_Hilfinger
                 await DisplayAlert("Info", "Passenger amount must be at least 1.", "Ok");
                 return;
             }
+
+            // Check for available seats
+            try
+            {
+                using (var db = new AirlineContext())
+                {
+                    var outboundSchedule = await db.Schedules.FirstOrDefaultAsync(s => s.Id == outboundFlight.Id);
+                    var outboundAircraft = await db.Aircrafts.FirstOrDefaultAsync(a => a.Id == outboundSchedule.AircraftId);
+                    var outboundCabinType = await db.CabinTypes.FirstOrDefaultAsync(c => c.Name == outboundFlight.Cabin);
+
+                    switch (outboundFlight.Cabin)
+                    {
+                        case "Economy":
+                            var economySeatsBooked = await db.Tickets.Where(t => t.ScheduleId == outboundSchedule.Id 
+                                                                            && t.CabinTypeId == outboundCabinType.Id).CountAsync();
+                            var freeEconomySeats = outboundAircraft.EconomySeats - economySeatsBooked;
+                            if (freeEconomySeats < passengerAmount)
+                            {
+                                await DisplayAlert("Info", "Not enough economy seats available on the outbound flight.", "Ok");
+                                return;
+                            }
+                            break;
+
+                        case "Business":
+                            var businessSeatsBooked = await db.Tickets.Where(t => t.ScheduleId == outboundSchedule.Id 
+                                                                            && t.CabinTypeId == outboundCabinType.Id).CountAsync();
+                            var freeBusinessSeats = outboundAircraft.EconomySeats - businessSeatsBooked;
+                            if (freeBusinessSeats < passengerAmount)
+                            {
+                                await DisplayAlert("Info", "Not enough business seats available on the outbound flight.", "Ok");
+                                return;
+                            }
+                            break;
+
+                        case "First Class":
+                            var firstClassSeatsBooked = await db.Tickets.Where(t => t.ScheduleId == outboundSchedule.Id 
+                                                                            && t.CabinTypeId == outboundCabinType.Id).CountAsync();
+                            var freeFirstClassSeats = outboundAircraft.EconomySeats - firstClassSeatsBooked;
+                            if (freeFirstClassSeats < passengerAmount)
+                            {
+                                await DisplayAlert("Info", "Not enough first class seats available on the outbound flight.", "Ok");
+                                return;
+                            }
+                            break;
+                    }
+
+                    if (returnFlight != null)
+                    {
+                        var returnSchedule = await db.Schedules.FirstOrDefaultAsync(s => s.Id == returnFlight.Id);
+                        var returnAircraft = await db.Aircrafts.FirstOrDefaultAsync(a => a.Id == returnSchedule.AircraftId);
+                        var returnCabinType = await db.CabinTypes.FirstOrDefaultAsync(c => c.Name == returnFlight.Cabin);
+
+                        switch (returnFlight.Cabin)
+                        {
+                            case "Economy":
+                                var economySeatsBooked = await db.Tickets.Where(t => t.ScheduleId == returnSchedule.Id
+                                                                                && t.CabinTypeId == returnCabinType.Id).CountAsync();
+                                var freeEconomySeats = returnAircraft.EconomySeats - economySeatsBooked;
+                                if (freeEconomySeats < passengerAmount)
+                                {
+                                    await DisplayAlert("Info", "Not enough economy seats available on the return flight.", "Ok");
+                                    return;
+                                }
+                                break;
+
+                            case "Business":
+                                var businessSeatsBooked = await db.Tickets.Where(t => t.ScheduleId == returnSchedule.Id
+                                                                                && t.CabinTypeId == returnCabinType.Id).CountAsync();
+                                var freeBusinessSeats = returnAircraft.EconomySeats - businessSeatsBooked;
+                                if (freeBusinessSeats < passengerAmount)
+                                {
+                                    await DisplayAlert("Info", "Not enough business seats available on the return flight.", "Ok");
+                                    return;
+                                }
+                                break;
+
+                            case "First Class":
+                                var firstClassSeatsBooked = await db.Tickets.Where(t => t.ScheduleId == returnSchedule.Id
+                                                                                && t.CabinTypeId == returnCabinType.Id).CountAsync();
+                                var freeFirstClassSeats = returnAircraft.EconomySeats - firstClassSeatsBooked;
+                                if (freeFirstClassSeats < passengerAmount)
+                                {
+                                    await DisplayAlert("Info", "Not enough first class seats available on the return flight.", "Ok");
+                                    return;
+                                }
+                                break;
+                        }
+                    }
+                    
+                }
+            } catch
+            {
+                await DisplayAlert("Error", "An error occurred while processing your booking. Please try again.", "Ok");
+                return;
+            }
+            
+
             ShellNavigationQueryParameters parameters = new ShellNavigationQueryParameters()
             {
                 {"outboundFlight", outboundFlight},
@@ -268,8 +365,6 @@ namespace Session_3_Dennis_Hilfinger
         {
             Application.Current.Quit();
         }
-
-        
 
     }
     
