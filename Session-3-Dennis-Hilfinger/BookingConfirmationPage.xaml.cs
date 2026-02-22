@@ -35,20 +35,28 @@ public partial class BookingConfirmationPage : ContentPage, IQueryAttributable
         OutboundFlightNumberLabel.Text = outboundFlight.FlightNumbers;
 
 
-        ReturnFromLabel.Text = returnFlight.DepartureAirport;
-        ReturnToLabel.Text = returnFlight.DestinationAirport;
-        ReturnCabinTypeLabel.Text = returnFlight.Cabin;
-        ReturnDateLabel.Text = returnFlight.FlightDate.ToString("dd.MM.yyyy");
-        ReturnFlightNumberLabel.Text = returnFlight.FlightNumbers;
-
-        using(var db = new AirlineContext())
+        if (returnFlight != null)
         {
-            var countryList = await db.Countries.ToListAsync();
-            foreach(var country in countryList)
-            {
-                CountryPicker.Items.Add(country.Name);
-            }
+            ReturnFromLabel.Text = returnFlight.DepartureAirport;
+            ReturnToLabel.Text = returnFlight.DestinationAirport;
+            ReturnCabinTypeLabel.Text = returnFlight.Cabin;
+            ReturnDateLabel.Text = returnFlight.FlightDate.ToString("dd.MM.yyyy");
+            ReturnFlightNumberLabel.Text = returnFlight.FlightNumbers;
+        } else
+        {
+            ReturnDetailsLabel.IsVisible = false;
+            ReturnDetailsGrid.IsVisible = false;
         }
+
+
+            using (var db = new AirlineContext())
+            {
+                var countryList = await db.Countries.ToListAsync();
+                foreach (var country in countryList)
+                {
+                    CountryPicker.Items.Add(country.Name);
+                }
+            }
     }
 
     private async void AddPassenger(object sender, EventArgs e)

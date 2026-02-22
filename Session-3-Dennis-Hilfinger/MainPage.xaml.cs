@@ -118,12 +118,12 @@ namespace Session_3_Dennis_Hilfinger
                     OutboundFlightList.Clear();
                     ReturnFlightList.Clear();
 
+
+                    // Outbound flights
                     var outboundFlights = db.Schedules
                         .Include(s => s.Route).ThenInclude(r => r.DepartureAirport)
                         .Include(s => s.Route).ThenInclude(r => r.ArrivalAirport)
-                        .Where(f => f.Confirmed == true
-                        && f.Route.DepartureAirportId == departureAirport.Id
-                        && f.Route.ArrivalAirportId == arrivalAirport.Id);
+                        .Where(f => f.Confirmed == true);
 
                     if (OutboundCheckBox.IsChecked)
                     {
@@ -136,8 +136,38 @@ namespace Session_3_Dennis_Hilfinger
                         outboundFlights = outboundFlights.Where(f => f.Date == outboundDate);
                     }
 
+
+                    var outboundDeparture = outboundFlights.Where(f => f.Route.DepartureAirportId == departureAirport.Id);
+                    var outboundArrival = outboundFlights.Where(f => f.Route.ArrivalAirportId == arrivalAirport.Id);
+                    var matches = await outboundDeparture
+                                            .Select(d => d.Route.ArrivalAirport.Id)
+                                            .Intersect(outboundArrival.Select(a => a.Route.DepartureAirport.Id))
+                                            .ToListAsync();
+
+                    List<Schedule[]> outboundIndirectFlights = new List<Schedule[]>();
+
+                    foreach (var match in matches)
+                    {
+                        var firstFlight = await outboundFlights.FirstOrDefaultAsync(f => f.Route.ArrivalAirportId == match
+                                                                                    && f.Route.DepartureAirportId == departureAirport.Id);
+                        TimeOnly earliestLeaveTime = firstFlight.Time.AddMinutes(firstFlight.Route.FlightTime);
+                        var secondFlight = await outboundFlights
+                                                    .Where(f => f.Route.DepartureAirportId == match 
+                                                            && f.Time > earliestLeaveTime
+                                                            && f.Route.ArrivalAirportId == arrivalAirport.Id)
+                                                    .FirstOrDefaultAsync();
+                        if (secondFlight != null)
+                        {
+                            outboundIndirectFlights.Add([firstFlight, secondFlight]);
+                        }
+                    }
+                    
+
+                    var outboundDirectFlights = outboundFlights.Where(f => f.Route.DepartureAirportId == departureAirport.Id
+                                                            && f.Route.ArrivalAirportId == arrivalAirport.Id);
+
                     OutboundFlightList.Clear();
-                    foreach (var flight in outboundFlights)
+                    foreach (var flight in outboundDirectFlights)
                     {
                         if (flight.Route == null)
                         {
@@ -145,7 +175,7 @@ namespace Session_3_Dennis_Hilfinger
                         }
                         OutboundFlightList.Add(new FlightDTO
                         {
-                            Id = flight.Id,
+                            Id_First = flight.Id,
                             FlightDate = flight.Date,
                             FlightTime = flight.Time,
                             DepartureAirport = flight.Route.DepartureAirport.Iatacode,
@@ -155,19 +185,41 @@ namespace Session_3_Dennis_Hilfinger
                             Cabin = cabin
                         });
                     }
+
+                    foreach (var flight in outboundIndirectFlights)
+                    {
+                        if (flight.Length != 2)
+                        {
+                            continue;
+                        }
+                        if (flight[0].Route == null || flight[1].Route == null)
+                        {
+                            continue;
+                        }
+                        OutboundFlightList.Add(new FlightDTO
+                        {
+                            Id_First = flight[0].Id,
+                            Id_Second = flight[1].Id,
+                            FlightDate = flight[0].Date,
+                            FlightTime = flight[0].Time,
+                            DepartureAirport = flight[0].Route.DepartureAirport.Iatacode,
+                            DestinationAirport = flight[1].Route.ArrivalAirport.Iatacode,
+                            FlightNumbers = $"{flight[0].FlightNumber} - {flight[1].FlightNumber}",
+                            BasePrice = decimal.ToInt32(flight[0].EconomyPrice + flight[1].EconomyPrice),
+                            Cabin = cabin
+                        });
+                    }
+
                     OutboundFlightGrid.ItemsSource = OutboundFlightList;
 
-
+                    // Return flights
                     if (HasReturn)
                     {
-                        ReturnFlightList.Clear();
 
                         var returnFlights = db.Schedules
                             .Include(s => s.Route).ThenInclude(r => r.DepartureAirport)
                             .Include(s => s.Route).ThenInclude(r => r.ArrivalAirport)
-                            .Where(f => f.Confirmed == true
-                            && f.Route.DepartureAirportId == arrivalAirport.Id   // switch departure and arrival for return flight
-                            && f.Route.ArrivalAirportId == departureAirport.Id); // switch departure and arrival for return flight
+                            .Where(f => f.Confirmed == true);
 
                         if (ReturnCheckBox.IsChecked)
                         {
@@ -180,8 +232,35 @@ namespace Session_3_Dennis_Hilfinger
                             returnFlights = returnFlights.Where(f => f.Date == returnDate);
                         }
 
-                        ReturnFlightList.Clear();
-                        foreach (var flight in returnFlights)
+                        var returnDeparture = returnFlights.Where(f => f.Route.DepartureAirportId == arrivalAirport.Id);
+                        var returnArrival = returnFlights.Where(f => f.Route.ArrivalAirportId == departureAirport.Id);
+                        var returnMatches = await returnDeparture
+                                                .Select(d => d.Route.ArrivalAirport.Id)
+                                                .Intersect(returnArrival.Select(a => a.Route.DepartureAirport.Id))
+                                                .ToListAsync();
+
+                        List<Schedule[]> returnIndirectFlights = new List<Schedule[]>();
+
+                        foreach (var match in returnMatches)
+                        {
+                            var firstFlight = await returnFlights.FirstOrDefaultAsync(f => f.Route.ArrivalAirportId == match
+                                                                                        && f.Route.DepartureAirportId == arrivalAirport.Id);
+                            TimeOnly earliestLeaveTime = firstFlight.Time.AddMinutes(firstFlight.Route.FlightTime);
+                            var secondFlight = await returnFlights
+                                                        .Where(f => f.Route.DepartureAirportId == match
+                                                                && f.Time > earliestLeaveTime
+                                                                && f.Route.ArrivalAirportId == departureAirport.Id)
+                                                        .FirstOrDefaultAsync();
+                            if (secondFlight != null)
+                            {
+                                returnIndirectFlights.Add([firstFlight, secondFlight]);
+                            }
+                        }
+
+                        var returnDirectFlights = returnFlights.Where(f => f.Route.DepartureAirportId == arrivalAirport.Id
+                                                                && f.Route.ArrivalAirportId == departureAirport.Id);
+
+                        foreach (var flight in returnDirectFlights)
                         {
                             if (flight.Route == null)
                             {
@@ -189,7 +268,7 @@ namespace Session_3_Dennis_Hilfinger
                             }
                             ReturnFlightList.Add(new FlightDTO
                             {
-                                Id = flight.Id,
+                                Id_First = flight.Id,
                                 FlightDate = flight.Date,
                                 FlightTime = flight.Time,
                                 DepartureAirport = flight.Route.DepartureAirport.Iatacode,
@@ -199,9 +278,34 @@ namespace Session_3_Dennis_Hilfinger
                                 Cabin = cabin
                             });
                         }
+
+                        foreach (var flight in returnIndirectFlights)
+                        {
+                            if (flight.Length != 2)
+                            {
+                                continue;
+                            }
+                            if (flight[0].Route == null || flight[1].Route == null)
+                            {
+                                continue;
+                            }
+                            ReturnFlightList.Add(new FlightDTO
+                            {
+                                Id_First = flight[0].Id,
+                                Id_Second = flight[1].Id,
+                                FlightDate = flight[0].Date,
+                                FlightTime = flight[0].Time,
+                                DepartureAirport = flight[0].Route.DepartureAirport.Iatacode,
+                                DestinationAirport = flight[1].Route.ArrivalAirport.Iatacode,
+                                FlightNumbers = $"{flight[0].FlightNumber} - {flight[1].FlightNumber}",
+                                BasePrice = decimal.ToInt32(flight[0].EconomyPrice + flight[1].EconomyPrice),
+                                Cabin = cabin
+                            });
+                        }
+
                         ReturnFlightGrid.ItemsSource = ReturnFlightList;
                     }
-                    
+
                 }
             } catch
             {
@@ -261,7 +365,12 @@ namespace Session_3_Dennis_Hilfinger
             {
                 using (var db = new AirlineContext())
                 {
-                    var outboundSchedule = await db.Schedules.FirstOrDefaultAsync(s => s.Id == outboundFlight.Id);
+                    var outboundSchedule = await db.Schedules.FirstOrDefaultAsync(s => s.Id == outboundFlight.Id_First); 
+                    Schedule outboundSchedule_Second = null;
+                    if (outboundFlight.Id_Second != null)
+                    {
+                        outboundSchedule_Second = await db.Schedules.FirstOrDefaultAsync(s => s.Id == outboundFlight.Id_Second);
+                    }
                     var outboundAircraft = await db.Aircrafts.FirstOrDefaultAsync(a => a.Id == outboundSchedule.AircraftId);
                     var outboundCabinType = await db.CabinTypes.FirstOrDefaultAsync(c => c.Name == outboundFlight.Cabin);
 
@@ -276,6 +385,18 @@ namespace Session_3_Dennis_Hilfinger
                                 await DisplayAlert("Info", "Not enough economy seats available on the outbound flight.", "Ok");
                                 return;
                             }
+
+                            if (outboundSchedule_Second != null)
+                            {
+                                economySeatsBooked = await db.Tickets.Where(t => t.ScheduleId == outboundSchedule_Second.Id
+                                                                            && t.CabinTypeId == outboundCabinType.Id).CountAsync();
+                                freeEconomySeats = outboundAircraft.EconomySeats - economySeatsBooked;
+                                if (freeEconomySeats < passengerAmount)
+                                {
+                                    await DisplayAlert("Info", "Not enough economy seats available on the outbound flight.", "Ok");
+                                    return;
+                                }
+                            }
                             break;
 
                         case "Business":
@@ -286,6 +407,18 @@ namespace Session_3_Dennis_Hilfinger
                             {
                                 await DisplayAlert("Info", "Not enough business seats available on the outbound flight.", "Ok");
                                 return;
+                            }
+
+                            if (outboundSchedule_Second != null)
+                            {
+                                businessSeatsBooked = await db.Tickets.Where(t => t.ScheduleId == outboundSchedule_Second.Id
+                                                                            && t.CabinTypeId == outboundCabinType.Id).CountAsync();
+                                freeBusinessSeats = outboundAircraft.EconomySeats - businessSeatsBooked;
+                                if (freeBusinessSeats < passengerAmount)
+                                {
+                                    await DisplayAlert("Info", "Not enough business seats available on the outbound flight.", "Ok");
+                                    return;
+                                }
                             }
                             break;
 
@@ -298,12 +431,29 @@ namespace Session_3_Dennis_Hilfinger
                                 await DisplayAlert("Info", "Not enough first class seats available on the outbound flight.", "Ok");
                                 return;
                             }
+
+                            if (outboundSchedule_Second != null)
+                            {
+                                firstClassSeatsBooked = await db.Tickets.Where(t => t.ScheduleId == outboundSchedule_Second.Id
+                                                                            && t.CabinTypeId == outboundCabinType.Id).CountAsync();
+                                freeFirstClassSeats = outboundAircraft.EconomySeats - firstClassSeatsBooked;
+                                if (freeFirstClassSeats < passengerAmount)
+                                {
+                                    await DisplayAlert("Info", "Not enough first class seats available on the outbound flight.", "Ok");
+                                    return;
+                                }
+                            }
                             break;
                     }
 
                     if (returnFlight != null)
                     {
-                        var returnSchedule = await db.Schedules.FirstOrDefaultAsync(s => s.Id == returnFlight.Id);
+                        var returnSchedule = await db.Schedules.FirstOrDefaultAsync(s => s.Id == returnFlight.Id_First);
+                        Schedule returnSchedule_Second = null;
+                        if (returnFlight.Id_Second != null)
+                        {
+                            returnSchedule_Second = await db.Schedules.FirstOrDefaultAsync(s => s.Id == returnFlight.Id_Second);
+                        }
                         var returnAircraft = await db.Aircrafts.FirstOrDefaultAsync(a => a.Id == returnSchedule.AircraftId);
                         var returnCabinType = await db.CabinTypes.FirstOrDefaultAsync(c => c.Name == returnFlight.Cabin);
 
@@ -318,6 +468,19 @@ namespace Session_3_Dennis_Hilfinger
                                     await DisplayAlert("Info", "Not enough economy seats available on the return flight.", "Ok");
                                     return;
                                 }
+
+                                if (returnSchedule_Second != null)
+                                {
+                                    economySeatsBooked = await db.Tickets.Where(t => t.ScheduleId == returnSchedule_Second.Id
+                                                                                && t.CabinTypeId == returnCabinType.Id).CountAsync();
+                                    freeEconomySeats = returnAircraft.EconomySeats - economySeatsBooked;
+                                    if (freeEconomySeats < passengerAmount)
+                                    {
+                                        await DisplayAlert("Info", "Not enough economy seats available on the return flight.", "Ok");
+                                        return;
+                                    }
+                                }
+
                                 break;
 
                             case "Business":
@@ -329,6 +492,18 @@ namespace Session_3_Dennis_Hilfinger
                                     await DisplayAlert("Info", "Not enough business seats available on the return flight.", "Ok");
                                     return;
                                 }
+
+                                if (returnSchedule_Second != null)
+                                {
+                                    businessSeatsBooked = await db.Tickets.Where(t => t.ScheduleId == returnSchedule_Second.Id
+                                                                                && t.CabinTypeId == returnCabinType.Id).CountAsync();
+                                    freeBusinessSeats = returnAircraft.EconomySeats - businessSeatsBooked;
+                                    if (freeBusinessSeats < passengerAmount)
+                                    {
+                                        await DisplayAlert("Info", "Not enough business seats available on the return flight.", "Ok");
+                                        return;
+                                    }
+                                }
                                 break;
 
                             case "First Class":
@@ -339,6 +514,17 @@ namespace Session_3_Dennis_Hilfinger
                                 {
                                     await DisplayAlert("Info", "Not enough first class seats available on the return flight.", "Ok");
                                     return;
+                                }
+
+                                if (returnSchedule_Second != null)
+                                {
+                                    firstClassSeatsBooked = await db.Tickets.Where(t => t.ScheduleId == returnSchedule_Second.Id
+                                                                                && t.CabinTypeId == returnCabinType.Id).CountAsync();
+                                    freeFirstClassSeats = returnAircraft.EconomySeats - firstClassSeatsBooked;
+                                    if (freeFirstClassSeats < passengerAmount)
+                                    {
+                                        await DisplayAlert("Info", "Not enough first class seats available on the return flight.", "Ok");
+                                    }
                                 }
                                 break;
                         }

@@ -88,13 +88,15 @@
             </Grid>
 
             <Label 
+                x:Name="ReturnDetailsLabel"
                 Text="Return flight details:"
                 VerticalOptions="Center"
                 HorizontalOptions="Start"
                 Margin="0, 20, 0, 0"/>
             <Grid
         ColumnDefinitions="*, *, *, *, *"
-        ColumnSpacing="10">
+        ColumnSpacing="10"
+                x:Name="ReturnDetailsGrid">
                 <HorizontalStackLayout 
             Grid.Column="0" 
             Grid.Row="0"

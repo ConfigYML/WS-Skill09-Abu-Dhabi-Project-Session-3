@@ -72,29 +72,24 @@ public partial class BillingConfirmationPage : ContentPage, IQueryAttributable
                 await db.SaveChangesAsync();
             }
 
-                var outboundCabinType = db.CabinTypes.FirstOrDefault(ct => ct.Name == outboundFlight.Cabin);
-            var outboundSchedule = db.Schedules.FirstOrDefault(s => s.Id == outboundFlight.Id);
+            var outboundCabinType = db.CabinTypes.FirstOrDefault(ct => ct.Name == outboundFlight.Cabin);
 
-            foreach (var pass in passengers)
+            List<Schedule> outboundSchedules = new List<Schedule>();
+            if (outboundFlight.Id_Second != null)
             {
-                db.Tickets.Add(new Ticket()
-                {
-                    Firstname = pass.FirstName,
-                    Lastname = pass.LastName,
-                    PassportNumber = pass.PassportNumber,
-                    PassportCountryId = pass.CountryId,
-                    Phone = pass.Phone,
-                    BookingReference = bookingReference,
-                    Schedule = outboundSchedule,
-                    CabinTypeId = outboundCabinType.Id,
-                    UserId = targetUser.Id,
-                    Confirmed = true
-                });
+                outboundSchedules = await db.Schedules
+                                            .Where(s => s.Id == outboundFlight.Id_First || s.Id == outboundFlight.Id_Second)
+                                            .ToListAsync();
             }
-            if (returnFlight != null)
+            else
             {
-                var returnCabinType = db.CabinTypes.FirstOrDefault(ct => ct.Name == returnFlight.Cabin);
-                var returnSchedule = db.Schedules.FirstOrDefault(s => s.Id == returnFlight.Id);
+                outboundSchedules = await db.Schedules
+                                            .Where(s => s.Id == outboundFlight.Id_First)
+                                            .ToListAsync();
+            }
+
+            foreach(var sched in outboundSchedules)
+            {
                 foreach (var pass in passengers)
                 {
                     db.Tickets.Add(new Ticket()
@@ -105,12 +100,52 @@ public partial class BillingConfirmationPage : ContentPage, IQueryAttributable
                         PassportCountryId = pass.CountryId,
                         Phone = pass.Phone,
                         BookingReference = bookingReference,
-                        Schedule = returnSchedule,
-                        CabinTypeId = returnCabinType.Id,
+                        Schedule = sched,
+                        CabinTypeId = outboundCabinType.Id,
                         UserId = targetUser.Id,
                         Confirmed = true
                     });
                 }
+            }
+                
+            
+            if (returnFlight != null)
+            {
+                var returnCabinType = db.CabinTypes.FirstOrDefault(ct => ct.Name == returnFlight.Cabin);
+
+                List<Schedule> returnSchedules = new List<Schedule>();
+                if (returnFlight.Id_Second != null)
+                {
+                    returnSchedules = await db.Schedules
+                                                .Where(s => s.Id == returnFlight.Id_First || s.Id == returnFlight.Id_Second)
+                                                .ToListAsync();
+                }
+                else
+                {
+                    returnSchedules = await db.Schedules
+                                                .Where(s => s.Id == returnFlight.Id_First)
+                                                .ToListAsync();
+                }
+                foreach (var sched in returnSchedules)
+                {
+                    foreach (var pass in passengers)
+                    {
+                        db.Tickets.Add(new Ticket()
+                        {
+                            Firstname = pass.FirstName,
+                            Lastname = pass.LastName,
+                            PassportNumber = pass.PassportNumber,
+                            PassportCountryId = pass.CountryId,
+                            Phone = pass.Phone,
+                            BookingReference = bookingReference,
+                            Schedule = sched,
+                            CabinTypeId = returnCabinType.Id,
+                            UserId = targetUser.Id,
+                            Confirmed = true
+                        });
+                    }
+                }
+                
             }
             await db.SaveChangesAsync();
             await DisplayAlert("Success", $"Tickets issued successfully! Your booking reference is {bookingReference}.", "OK");

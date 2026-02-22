@@ -8,7 +8,8 @@ namespace Session_3_Dennis_Hilfinger.Models
 {
     public class FlightDTO
     {
-        public int Id { get; set; }
+        public int Id_First { get; set; }
+        public int Id_Second { get; set; }
         public DateOnly FlightDate { get; set; }
         public TimeOnly FlightTime { get; set; }
         public DateTime FlightDt => new DateTime(FlightDate.Year, FlightDate.Month, FlightDate.Day, FlightTime.Hour, FlightTime.Minute, FlightTime.Second);
